@@ -1,4 +1,49 @@
-# Mission Control Claude Code Plugin Install
+# Mission Control Install
+
+Mission Control can be installed into agent CLIs as a local skill plus MCP server. The core stays local: SQLite is the source of truth, and the MCP server runs from this checkout.
+
+## Hermes Agent
+
+Recommended one-line install from GitHub:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/Biogod2020/x-planner/master/scripts/install_hermes_from_github.sh | bash
+```
+
+This clones or updates the repository at:
+
+```text
+~/.hermes/plugins/x-planner
+```
+
+Then it installs:
+
+- the `mission-control` skill into `~/.hermes/skills/mission-control`;
+- the `mission_control` MCP server entry into `~/.hermes/config.yaml`;
+- local SQLite state at `~/.hermes/mission-control/mission-control.sqlite3`.
+
+Manual install from an existing checkout:
+
+```bash
+./integrations/hermes/install_hermes.sh
+```
+
+Verify:
+
+```bash
+hermes doctor
+hermes
+```
+
+Smoke-test prompt:
+
+```text
+Use the mission-control skill. Call get_status_brief, then explain the next required action.
+```
+
+The Hermes installer intentionally avoids `hermes mcp add` because current Hermes CLI builds have non-interactive stdio install rough edges around dash-prefixed `--args`, repeated `--env`, and tool-enable prompts.
+
+## Claude Code Plugin
 
 This plugin bundles:
 

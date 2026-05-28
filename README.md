@@ -29,6 +29,16 @@ uv run pytest
 
 See [PLANNER_TUTORIAL.md](PLANNER_TUTORIAL.md) for the end-to-end planner workflow, agent prompts, evidence rules, and live trial steps.
 
+## Agent Installs
+
+Hermes Agent one-line install:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/Biogod2020/x-planner/master/scripts/install_hermes_from_github.sh | bash
+```
+
+See [INSTALL.md](INSTALL.md) for Hermes and Claude Code install details.
+
 ## Initialize a Local Database
 
 ```bash

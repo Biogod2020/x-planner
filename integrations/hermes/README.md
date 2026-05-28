@@ -4,14 +4,35 @@ This directory packages Mission Control for local Hermes Agent testing. It insta
 
 It does not change Mission Core behavior and does not add product features.
 
+## Recommended GitHub Install
+
+For users installing from GitHub, use the bootstrap script from the repository:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/Biogod2020/x-planner/master/scripts/install_hermes_from_github.sh | bash
+```
+
+The bootstrap script clones or updates the repo at:
+
+```text
+~/.hermes/plugins/x-planner
+```
+
+Then it runs this directory's local installer. Keep that checkout in place because Hermes starts the MCP server from that path.
+
+To install a specific ref:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/Biogod2020/x-planner/master/scripts/install_hermes_from_github.sh | bash -s -- --ref master
+```
+
 ## Files
 
 - `install_hermes.sh`: installs or updates the Hermes skill and `mcp_servers.mission_control`.
 - `uninstall_hermes.sh`: removes only the Hermes skill and MCP server entry. It keeps SQLite state unless `--purge-data` is passed.
 - `config-snippet.yaml`: the MCP config shape installed into `~/.hermes/config.yaml`.
-- `trial.md`: live-trial prompts for vague-task routing and evidence-gate refusal.
 
-## Install
+## Local Checkout Install
 
 Preview the install without changing your Hermes profile:
 
@@ -33,6 +54,14 @@ The installer:
 - backs up `~/.hermes/config.yaml` before editing it;
 - adds or updates only `mcp_servers.mission_control`;
 - preserves unrelated Hermes config text.
+
+This installer intentionally does not use `hermes mcp add`. Current Hermes CLI builds have rough edges for non-interactive local stdio installs:
+
+- `--args` cannot reliably pass dash-prefixed arguments such as `-m`;
+- repeated `--env` flags keep only the last group;
+- successful discovery prompts for `Enable all tools?` without a `--yes` flag.
+
+The direct config upsert avoids those issues while still using Hermes' normal MCP runtime.
 
 The installed MCP entry is equivalent to:
 
@@ -92,24 +121,20 @@ The MCP server stores SQLite state at:
 ~/.hermes/mission-control/mission-control.sqlite3
 ```
 
-## Run A Live Trial
-
-Use the prompts in `trial.md`.
-
-Recommended sequence:
+## Smoke Test
 
 ```bash
 ./integrations/hermes/install_hermes.sh
 hermes chat
 ```
 
-In Hermes, send Trial A from `trial.md`, answer its clarification questions with concrete constraints and evidence, and confirm it uses:
+In Hermes, send:
 
 ```text
-clarify -> mission brief -> MCP save -> evidence-backed task -> accepted audit -> review
+Use the mission-control skill. Help me plan a small repo hardening task. Follow clarify -> mission brief -> MCP save -> evidence-backed task -> accepted audit -> review.
 ```
 
-Then send Trial B from `trial.md` and confirm Hermes refuses to mark the task done without accepted evidence audit.
+Expected result: Hermes clarifies first, saves the mission brief through MCP, creates an evidence-backed task, refuses terminal task status until evidence has an accepted audit, and records a review.
 
 ## Uninstall
 
