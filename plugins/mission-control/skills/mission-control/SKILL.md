@@ -1,3 +1,7 @@
+---
+description: Manage human goals with Mission Control Core using Mission Briefs, MCP state, evidence audits, one daily mainline task, and review decisions. Use when planning, tracking, completing, accepting, or reviewing tasks through mission-control.
+---
+
 # Mission Control Skill
 
 Use this skill when managing a human goal with Mission Control Core. The database is the source of truth. Skills guide behavior; MCP tools mutate state.

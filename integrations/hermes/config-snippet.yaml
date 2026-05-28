@@ -1,0 +1,8 @@
+mcp_servers:
+  mission_control:
+    command: "bash"
+    args:
+      - "-lc"
+      - "cd <repo_root> && exec uv run python -m mcp_server.server"
+    env:
+      MISSION_CONTROL_DB: "~/.hermes/mission-control/mission-control.sqlite3"

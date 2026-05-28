@@ -78,13 +78,69 @@ def test_accepting_completion_with_evidence(tmp_path):
         expected_output="README explains test and server commands",
         evidence_required="README.md committed with commands",
     )
-    repository.submit_evidence(task.id, description="README includes commands", uri="file://README.md")
+    evidence = repository.submit_evidence(task.id, description="README includes commands", uri="file://README.md")
+    repository.record_evidence_audit(
+        evidence.id,
+        audit_status="accepted",
+        audit_notes="Evidence matches the README completion requirement.",
+    )
 
     completed = repository.update_task_status(task.id, TaskStatus.COMPLETED)
     accepted = repository.update_task_status(task.id, TaskStatus.ACCEPTED)
 
     assert completed.status == TaskStatus.COMPLETED
     assert accepted.status == TaskStatus.ACCEPTED
+
+
+def test_submitted_evidence_without_accepted_audit_cannot_complete_task(tmp_path):
+    repository = repo(tmp_path)
+    current_mission = mission(repository)
+    task = repository.create_task(
+        mission_id=current_mission.id,
+        title="Require audit",
+        next_action="Submit evidence",
+        expected_output="Evidence is audited",
+        evidence_required="Accepted evidence audit",
+    )
+    repository.submit_evidence(task.id, description="Evidence exists but is pending audit")
+
+    with pytest.raises(ValueError, match="accepted evidence audit"):
+        repository.update_task_status(task.id, TaskStatus.COMPLETED)
+
+
+def test_accepted_evidence_audit_allows_completion(tmp_path):
+    repository = repo(tmp_path)
+    current_mission = mission(repository)
+    task = repository.create_task(
+        mission_id=current_mission.id,
+        title="Accepted audit",
+        next_action="Audit evidence",
+        expected_output="Task can complete",
+        evidence_required="Accepted audit",
+    )
+    evidence = repository.submit_evidence(task.id, description="Evidence ready for audit")
+    repository.record_evidence_audit(evidence.id, audit_status="accepted", audit_notes="Matches requirement")
+
+    completed = repository.update_task_status(task.id, TaskStatus.COMPLETED)
+
+    assert completed.status == TaskStatus.COMPLETED
+
+
+def test_rejected_evidence_audit_blocks_completion(tmp_path):
+    repository = repo(tmp_path)
+    current_mission = mission(repository)
+    task = repository.create_task(
+        mission_id=current_mission.id,
+        title="Rejected audit",
+        next_action="Audit weak evidence",
+        expected_output="Weak evidence is rejected",
+        evidence_required="Accepted audit",
+    )
+    evidence = repository.submit_evidence(task.id, description="Weak evidence")
+    repository.record_evidence_audit(evidence.id, audit_status="rejected", audit_notes="Does not prove completion")
+
+    with pytest.raises(ValueError, match="accepted evidence audit"):
+        repository.update_task_status(task.id, TaskStatus.COMPLETED)
 
 
 def test_failure_count_escalation(tmp_path):

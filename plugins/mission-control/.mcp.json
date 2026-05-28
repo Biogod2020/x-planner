@@ -1,0 +1,19 @@
+{
+  "mcpServers": {
+    "mission-control": {
+      "command": "uv",
+      "args": [
+        "run",
+        "python",
+        "-m",
+        "mcp_server.server"
+      ],
+      "cwd": "${CLAUDE_PLUGIN_ROOT}",
+      "env": {
+        "MISSION_CONTROL_DB": "${CLAUDE_PLUGIN_DATA}/mission-control.sqlite3",
+        "UV_PROJECT_ENVIRONMENT": "${CLAUDE_PLUGIN_DATA}/.venv",
+        "UV_CACHE_DIR": "${CLAUDE_PLUGIN_DATA}/uv-cache"
+      }
+    }
+  }
+}

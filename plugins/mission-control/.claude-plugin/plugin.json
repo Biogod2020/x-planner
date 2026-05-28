@@ -1,0 +1,15 @@
+{
+  "name": "mission-control",
+  "description": "Local-first Mission Control Core for Claude Code: mission briefs, evidence-backed tasks, accepted evidence audits, and review decisions through bundled MCP tools.",
+  "version": "0.1.1",
+  "author": {
+    "name": "Mission Control Core"
+  },
+  "keywords": [
+    "mcp",
+    "mission-control",
+    "project-management",
+    "agent-skills",
+    "sqlite"
+  ]
+}

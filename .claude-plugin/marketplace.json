@@ -1,0 +1,21 @@
+{
+  "name": "mission-control-core",
+  "owner": {
+    "name": "Mission Control Core"
+  },
+  "description": "Local-first Mission Control plugin for Claude Code agents.",
+  "plugins": [
+    {
+      "name": "mission-control",
+      "source": "./plugins/mission-control",
+      "description": "Mission Control Core skill and SQLite-backed MCP tools for evidence-backed agent execution.",
+      "category": "Productivity",
+      "tags": [
+        "mcp",
+        "skills",
+        "project-management",
+        "sqlite"
+      ]
+    }
+  ]
+}

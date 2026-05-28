@@ -25,6 +25,10 @@ uv sync
 uv run pytest
 ```
 
+## User Tutorial
+
+See [PLANNER_TUTORIAL.md](PLANNER_TUTORIAL.md) for the end-to-end planner workflow, agent prompts, evidence rules, and live trial steps.
+
 ## Initialize a Local Database
 
 ```bash
@@ -43,4 +47,4 @@ Set `MISSION_CONTROL_DB=/path/to/mission.sqlite3` to choose a database file. If 
 
 Goal -> Mission -> Task -> Evidence -> Review -> Decision
 
-A task cannot become ready unless `next_action`, `expected_output`, and `evidence_required` are present. A task cannot become completed or accepted unless evidence exists. Completed or killed missions require a review record.
+A task cannot become ready unless `next_action`, `expected_output`, and `evidence_required` are present. A task cannot become completed or accepted unless it has an accepted evidence audit. Completed or killed missions require a review record.

@@ -46,8 +46,11 @@ def test_mcp_tool_layer_enforces_evidence_gate(tmp_path):
     db_path = tmp_path / "mission.sqlite3"
     _mission, task = create_ready_task_via_tools(db_path)
 
-    with pytest.raises(ValueError, match="evidence"):
-        tools.update_task_status(task_id=task["id"], status="completed", db_path=str(db_path))
+    blocked = tools.update_task_status(task_id=task["id"], status="completed", db_path=str(db_path))
+
+    assert blocked["ok"] is False
+    assert blocked["next_required_action"] == "submit_or_accept_evidence"
+    assert "accepted evidence audit" in blocked["reason"]
 
     evidence = tools.submit_evidence(
         task_id=task["id"],
@@ -68,6 +71,46 @@ def test_mcp_tool_layer_enforces_evidence_gate(tmp_path):
     assert audit["audit_status"] == "accepted"
     assert completed["status"] == "completed"
     assert accepted["status"] == "accepted"
+
+
+def test_update_task_status_cannot_bypass_accepted_audit_requirement(tmp_path):
+    db_path = tmp_path / "mission.sqlite3"
+    _mission, task = create_ready_task_via_tools(db_path)
+    evidence = tools.submit_evidence(
+        task_id=task["id"],
+        description="Evidence exists but has not been accepted",
+        db_path=str(db_path),
+    )
+
+    pending_block = tools.update_task_status(task_id=task["id"], status="completed", db_path=str(db_path))
+    tools.record_evidence_audit(
+        evidence_id=evidence["id"],
+        audit_status="rejected",
+        audit_notes="Insufficient proof",
+        db_path=str(db_path),
+    )
+    rejected_block = tools.update_task_status(task_id=task["id"], status="accepted", db_path=str(db_path))
+
+    assert pending_block["ok"] is False
+    assert pending_block["next_required_action"] == "submit_or_accept_evidence"
+    assert "accepted evidence audit" in pending_block["reason"]
+    assert rejected_block["ok"] is False
+    assert rejected_block["next_required_action"] == "submit_or_accept_evidence"
+    assert "accepted evidence audit" in rejected_block["reason"]
+
+
+def test_mcp_tool_response_includes_next_required_action_for_blocked_transition(tmp_path):
+    db_path = tmp_path / "mission.sqlite3"
+    _mission, task = create_ready_task_via_tools(db_path)
+
+    response = tools.update_task_status(task_id=task["id"], status="completed", db_path=str(db_path))
+
+    assert response == {
+        "ok": False,
+        "error": "task cannot be completed or accepted without accepted evidence audit",
+        "reason": "task cannot be completed or accepted without accepted evidence audit",
+        "next_required_action": "submit_or_accept_evidence",
+    }
 
 
 def test_mcp_tool_layer_rejects_ready_task_without_required_fields(tmp_path):
@@ -236,12 +279,15 @@ def test_actual_mcp_stdio_server_demonstrates_mission_task_evidence_review_flow(
                     )
                 )
 
-                rejected_completion = await session.call_tool(
-                    "update_task_status",
-                    {"task_id": task["id"], "status": "completed"},
+                rejected_completion = parse_tool_result(
+                    await session.call_tool(
+                        "update_task_status",
+                        {"task_id": task["id"], "status": "completed"},
+                    )
                 )
-                assert rejected_completion.isError is True
-                assert "evidence" in rejected_completion.content[0].text
+                assert rejected_completion["ok"] is False
+                assert rejected_completion["next_required_action"] == "submit_or_accept_evidence"
+                assert "accepted evidence audit" in rejected_completion["reason"]
 
                 selected = parse_tool_result(
                     await session.call_tool(
