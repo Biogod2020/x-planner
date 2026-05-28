@@ -137,8 +137,8 @@ def child_indent_for(lines: list[str], start: int, end: int) -> int:
     return 2
 
 
-def find_mission_control(lines: list[str], start: int, end: int, child_indent: int) -> tuple[int, int] | None:
-    prefix = " " * child_indent + "mission_control:"
+def find_server_block(lines: list[str], start: int, end: int, child_indent: int, server_name: str) -> tuple[int, int] | None:
+    prefix = " " * child_indent + f"{server_name}:"
     for index in range(start + 1, end):
         if lines[index].startswith(prefix):
             remove_end = index + 1
@@ -153,6 +153,15 @@ def find_mission_control(lines: list[str], start: int, end: int, child_indent: i
                 remove_end += 1
             return index, remove_end
     return None
+
+
+def remove_server_block(lines: list[str], start: int, end: int, child_indent: int, server_name: str) -> tuple[list[str], int]:
+    existing = find_server_block(lines, start, end, child_indent, server_name)
+    if existing is None:
+        return lines, end
+    remove_start, remove_end = existing
+    removed = remove_end - remove_start
+    return lines[:remove_start] + lines[remove_end:], end - removed
 
 
 def upsert_config(existing: str) -> str:
@@ -175,7 +184,12 @@ def upsert_config(existing: str) -> str:
 
     block_end = top_level_block_end(lines, mcp_index)
     child_indent = child_indent_for(lines, mcp_index, block_end)
-    existing_server = find_mission_control(lines, mcp_index, block_end, child_indent)
+
+    # Remove legacy installs that used a hyphenated MCP server key. Hermes turns
+    # both keys into similar tool prefixes, so keeping both creates duplicate
+    # or confusing Mission Control toolsets after reinstall.
+    lines, block_end = remove_server_block(lines, mcp_index, block_end, child_indent, "mission-control")
+    existing_server = find_server_block(lines, mcp_index, block_end, child_indent, "mission_control")
     new_block = server_block(child_indent)
 
     if existing_server is not None:

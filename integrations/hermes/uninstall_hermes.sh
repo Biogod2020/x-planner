@@ -105,16 +105,8 @@ def child_indent_for(lines: list[str], start: int, end: int) -> int:
     return 2
 
 
-def remove_mission_control(existing: str) -> str:
-    lines = existing.splitlines(keepends=True)
-    mcp_index = find_mcp_servers(lines)
-    if mcp_index is None:
-        return existing
-
-    block_end = top_level_block_end(lines, mcp_index)
-    child_indent = child_indent_for(lines, mcp_index, block_end)
-    prefix = " " * child_indent + "mission_control:"
-
+def remove_server_block(lines: list[str], mcp_index: int, block_end: int, child_indent: int, server_name: str) -> tuple[list[str], int]:
+    prefix = " " * child_indent + f"{server_name}:"
     for index in range(mcp_index + 1, block_end):
         if lines[index].startswith(prefix):
             remove_end = index + 1
@@ -127,9 +119,24 @@ def remove_mission_control(existing: str) -> str:
                 if width <= child_indent and not line.lstrip().startswith("#"):
                     break
                 remove_end += 1
-            return "".join(lines[:index] + lines[remove_end:])
+            removed = remove_end - index
+            return lines[:index] + lines[remove_end:], block_end - removed
+    return lines, block_end
 
-    return existing
+
+def remove_mission_control(existing: str) -> str:
+    lines = existing.splitlines(keepends=True)
+    mcp_index = find_mcp_servers(lines)
+    if mcp_index is None:
+        return existing
+
+    block_end = top_level_block_end(lines, mcp_index)
+    child_indent = child_indent_for(lines, mcp_index, block_end)
+
+    for server_name in ("mission_control", "mission-control"):
+        lines, block_end = remove_server_block(lines, mcp_index, block_end, child_indent, server_name)
+
+    return "".join(lines)
 
 
 original = config_path.read_text() if config_path.exists() else ""
@@ -149,7 +156,7 @@ DRY RUN: would uninstall Mission Control from Hermes Agent.
 Would remove skill:
   ${SKILL_TARGET}
 
-Would remove only mcp_servers.mission_control from:
+Would remove mcp_servers.mission_control and legacy mcp_servers.mission-control from:
   ${CONFIG_PATH}
 
 EOF
